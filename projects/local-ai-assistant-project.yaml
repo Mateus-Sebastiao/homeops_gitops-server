@@ -3,6 +3,8 @@ kind: AppProject
 metadata:
   name: local-ai-assistant-project
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   description: Project for local-ai-assistant apps
   sourceRepos:
