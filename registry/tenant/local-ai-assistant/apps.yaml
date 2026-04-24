@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: local-ai-assistant-app
+  namespace: argocd
+spec:
+  project: local-ai-assistant-project
+  source:
+    repoURL: https://github.com/Mateus-Sebastiao/local-ai-assistant
+    targetRevision: main
+    path: charts/devops-assistant
+    helm:
+      valueFiles:
+      - values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: local-ai-assistant
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    createNamespace: true

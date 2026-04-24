@@ -1,0 +1,13 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: local-ai-assistant-project
+  namespace: argocd
+spec:
+  description: Project for local-ai-assistant apps
+  sourceRepos:
+  - 'https://github.com/Mateus-Sebastiao/homeops_gitops-server'
+  - 'https://github.com'
+  destinations:
+  - namespace: local-ai-assistant
+    server: https://kubernetes.default.svc
