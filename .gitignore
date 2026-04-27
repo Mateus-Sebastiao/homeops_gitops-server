@@ -1,0 +1,23 @@
+# --- Terraform ---
+# Ignore state files (contain secrets in plain text)
+*.tfstate
+*.tfstate.*
+
+# Ignore provider binary folder
+.terraform/
+
+# Ignore the lock file (optional, but recommended to avoid architecture conflicts if using different machines)
+.terraform.lock.hcl
+
+# Ignore sensitive variable files
+*.tfvars
+*.tfvars.json
+
+# --- Kubernetes ---
+# CRITICAL: Never upload your kubeconfig to Git!
+kubeconfig.yaml
+kubeconfig-*.yaml
+
+# --- System/Misc ---
+.DS_Store
+.env

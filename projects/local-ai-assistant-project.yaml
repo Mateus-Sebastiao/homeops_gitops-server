@@ -9,6 +9,7 @@ spec:
   description: Project for local-ai-assistant apps
   sourceRepos:
   - 'https://github.com/Mateus-Sebastiao/homeops_gitops-server'
+  - 'https://github.com/Mateus-Sebastiao/local-ai-assistant'
   - 'https://github.com'
   destinations:
   - namespace: local-ai-assistant
