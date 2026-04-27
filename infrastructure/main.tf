@@ -68,7 +68,7 @@ resource "helm_release" "cilium" {
   chart      = "cilium"
   version    = "1.19.3"
   namespace  = "kube-system"
-  timeout = 900
+  timeout    = 900
 
   depends_on = [local_file.kubeconfig]
 
