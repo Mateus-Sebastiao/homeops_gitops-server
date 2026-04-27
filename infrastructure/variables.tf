@@ -21,3 +21,9 @@ variable "agent_count" {
   type        = number
   default     = 2
 }
+
+variable "api_port" {
+  description = "The port used to access the Kubernetes API"
+  type        = number
+  default     = 6443
+}

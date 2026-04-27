@@ -1,14 +1,14 @@
 resource "terraform_data" "k3d_cluster" {
-    # Triggers a full replacement if core infrastructure parameters change
-    triggers_replace = {
-        agent_count  = var.agent_count
-        server_count = var.server_count
-        k3s_version  = var.k3s_version
-    }
+  # Triggers a full replacement if core infrastructure parameters change
+  triggers_replace = {
+    agent_count  = var.agent_count
+    server_count = var.server_count
+    k3s_version  = var.k3s_version
+  }
 
-    # Provisioning phase: Cluster creation + Cilium BPF Pre-requisites
-    provisioner "local-exec" {
-        command = <<EOT
+  # Provisioning phase: Cluster creation + Cilium BPF Pre-requisites
+  provisioner "local-exec" {
+    command = <<EOT
             # Step 1: Create the cluster disabling default networking components
             # We disable ServiceLB (Klipper) to allow MetalLB later
             # We disable Flannel and NetworkPolicy to allow Cilium eBPF
@@ -22,10 +22,10 @@ resource "terraform_data" "k3d_cluster" {
                 --k3s-arg "--disable-network-policy@server:*" \
                 --no-lb --wait
         EOT
-    }
+  }
 
-    provisioner "local-exec" {
-        command = <<EOT
+  provisioner "local-exec" {
+    command = <<EOT
             # Step 2: Fix BPF Mounts for each node to enable Cilium eBPF mode
             # Without this, Cilium cannot manage the BPF filesystem on Docker nodes
                 for node in $(docker ps --filter "name=k3d-${var.k3d_cluster_name}" --format "{{.Names}}"); do
@@ -37,18 +37,18 @@ resource "terraform_data" "k3d_cluster" {
                     docker exec $node mount --make-shared /run/cilium/cgroupv2 || true
                 done
         EOT
-    }
+  }
 
-    # Destruction phase: Clean up the cluster from the local machine
-    provisioner "local-exec" {
-        when    = destroy
-        command = "k3d cluster delete ${self.output.k3d_cluster_name}"
-    }
+  # Destruction phase: Clean up the cluster from the local machine
+  provisioner "local-exec" {
+    when    = destroy
+    command = "k3d cluster delete ${self.output.k3d_cluster_name}"
+  }
 
-    # Export output for downstream resource consumption
-    input = {
-        k3d_cluster_name = var.k3d_cluster_name
-    }
+  # Export output for downstream resource consumption
+  input = {
+    k3d_cluster_name = var.k3d_cluster_name
+  }
 }
 
 # Automatically generate and manage the kubeconfig file
@@ -60,4 +60,60 @@ resource "local_file" "kubeconfig" {
   provisioner "local-exec" {
     command = "k3d kubeconfig get ${var.k3d_cluster_name} > ${self.filename}"
   }
+}
+
+resource "helm_release" "cilium" {
+  name       = "cilium"
+  repository = "https://helm.cilium.io/"
+  chart      = "cilium"
+  version    = "1.19.3"
+  namespace  = "kube-system"
+  timeout = 900
+
+  depends_on = [local_file.kubeconfig]
+
+  values = [
+    yamlencode({
+      # Core eBPF & Kube-proxy replacement
+      kubeProxyReplacement = "true"
+      k8sServiceHost       = "${var.k3d_cluster_name}-server-0"
+      k8sServicePort       = var.api_port
+
+      # IPAM & Networking
+      ipam = {
+        mode = "kubernetes"
+      }
+      hostServices = {
+        enabled = false
+      }
+      externalIPs = {
+        enabled = true
+      }
+      nodePort = {
+        enabled = true
+      }
+      hostPort = {
+        enabled = true
+      }
+      bpf = {
+        masquerade = false
+      }
+
+      # Hubble Observability (This replaces the 'cilium hubble enable' CLI commands)
+      hubble = {
+        enabled = true
+        relay = {
+          enabled = true
+        }
+        ui = {
+          enabled = true
+        }
+      }
+
+      # Optimization for local labs
+      image = {
+        pullPolicy = "IfNotPresent"
+      }
+    })
+  ]
 }

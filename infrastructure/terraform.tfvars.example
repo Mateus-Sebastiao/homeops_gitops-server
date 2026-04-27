@@ -9,3 +9,6 @@ agent_count  = 2
 # K3s Versioning
 # Pinning to a specific version ensures environment stability
 k3s_version = "v1.31.5-k3s1"
+
+# The port used to access the Kubernetes API
+api_port = 6443
