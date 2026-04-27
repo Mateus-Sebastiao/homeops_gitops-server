@@ -1,0 +1,11 @@
+# Cluster Identity
+k3d_cluster_name = "homeops"
+
+# Node Configuration
+# Increase these if you plan to run heavy LLMs later
+server_count = 1
+agent_count  = 2
+
+# K3s Versioning
+# Pinning to a specific version ensures environment stability
+k3s_version = "v1.31.5-k3s1"
