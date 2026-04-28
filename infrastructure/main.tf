@@ -24,6 +24,11 @@ resource "terraform_data" "k3d_cluster" {
         EOT
   }
 
+  # Import pre-cached Cilium images into the k3d cluster to avoid internet downloads. But can be imported additional images
+  provisioner "local-exec" {
+    command = "bash ${path.module}/additional_scripts/import_images.sh ${var.k3d_cluster_name}"
+  }
+
   provisioner "local-exec" {
     command = <<EOT
             # Step 2: Fix BPF Mounts for each node to enable Cilium eBPF mode
