@@ -81,7 +81,7 @@ resource "helm_release" "cilium" {
     yamlencode({
       # Core eBPF & Kube-proxy replacement
       kubeProxyReplacement = "true"
-      k8sServiceHost       = "${var.k3d_cluster_name}-server-0"
+      k8sServiceHost       = "k3d-${var.k3d_cluster_name}-server-0"
       k8sServicePort       = var.api_port
 
       # IPAM & Networking
