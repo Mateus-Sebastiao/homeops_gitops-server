@@ -67,6 +67,7 @@ resource "local_file" "kubeconfig" {
   }
 }
 
+# Install Cilium via Helm
 resource "helm_release" "cilium" {
   name       = "cilium"
   repository = "https://helm.cilium.io/"
@@ -121,4 +122,56 @@ resource "helm_release" "cilium" {
       }
     })
   ]
+}
+
+# Install ArgoCD via Helm
+resource "helm_release" "argocd" {
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  namespace        = "argocd"
+  create_namespace = true
+  timeout          = 1800
+
+  depends_on = [helm_release.cilium]
+
+  set = [{
+    name  = "server.extraArgs"
+    value = "{--insecure}"
+  }]
+}
+
+# Install root-bootstrap
+resource "kubernetes_manifest" "argocd_root_app" {
+  depends_on = [helm_release.argocd]
+
+  manifest = {
+    apiVersion = "argoproj.io/v1alpha1"
+    kind       = "Application"
+    metadata = {
+      name      = "root-bootstrap"
+      namespace = "argocd"
+    }
+    spec = {
+      project = "default"
+      source = {
+        repoURL        = "https://github.com/Mateus-Sebastiao/homeops_gitops-server"
+        targetRevision = "main"
+        path           = "bootstrap"
+        directory = {
+          recurse = true
+        }
+      }
+      destination = {
+        server    = "https://kubernetes.default.svc"
+        namespace = "argocd"
+      }
+      syncPolicy = {
+        automated = {
+          prune    = true
+          selfHeal = true
+        }
+      }
+    }
+  }
 }
